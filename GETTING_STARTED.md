@@ -1,5 +1,9 @@
 # How to use this code
 
+## Model weights
+
+Model weights for all trained methods (FastFlow3D and ZeroFlow) and their ablations are provided in their own [GitHub repo](https://github.com/kylevedder/zeroflow_weights).
+
 ## File system assumptions
 
 ### Argoverse 2
