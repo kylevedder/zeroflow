@@ -21,6 +21,10 @@ arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 
 Read the [Getting Started](./GETTING_STARTED.md) doc for detailed instructions to setup the AV2 and Waymo Open datasets and use the prepared docker environments.
 
+## Pretrained weights
+
+All trained weights from the paper are available for download from [this repo](https://github.com/kylevedder/zeroflow_weights).
+
 ## Training a model
 
  Inside the main container (`./launch.sh`), run the `train_pl.py` with a path to a config (inside `configs/`) and optionally specify any number of GPUs (defaults to all GPUs on the system).
