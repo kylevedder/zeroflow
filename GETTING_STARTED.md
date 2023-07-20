@@ -28,7 +28,12 @@ Please note that when downloaded from the cloud, these files may have a differen
 
 Download the Scene Flow labels contributed by _Scalable Scene Flow from Point Clouds in the Real World_. We preprocess these files, both to convert them from an annoying proto file format to a standard Python format and to remove the ground points.
 
-Do this using the `data_prep_scripts/waymo/extract_flow_and_remove_ground.py` file in the Waymo Open docker container.
+Do this using 
+
+1. `data_prep_scripts/waymo/rasterize_heightmap.py` -- generate heightmaps in a separate folder used for ground removal
+2. `data_prep_scripts/waymo/extract_flow_and_remove_ground.py` -- extracts the points into a pickle format and removes the groundplane using the generated heightmaps
+
+in the Waymo Open docker container.
 
 ## Docker Images
 
