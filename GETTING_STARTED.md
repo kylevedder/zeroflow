@@ -20,7 +20,9 @@ argoverse2/val_sceneflow
 ```
 
 
-The [Argoverse 2 Scene Flow generation script](https://github.com/nchodosh/argoverse2-sf) to compute ground truth flows for both `train/` and `val/`.
+The [Argoverse 2 Scene Flow generation script](https://github.com/kylevedder/argoverse2-sf) to compute ground truth flows for both `train/` and `val/`.
+
+Please note that when downloaded from the cloud, these files may have a different top level directory format (their stored format keeps changing); you can solve this by moving the files or symlinking the appropriate directories into a different tree.
 
 ### Waymo Open
 
