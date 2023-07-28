@@ -8,7 +8,7 @@ arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 
 **News:**
 
- - June 18th, 2023: ZeroFlow was selected as a highlighted method in the CVPR 2023 _Workshop on Autonomous Driving_ Scene Flow Challenge!
+ - June 18th, 2023: ZeroFlow was selected as a highlighted method in the CVPR 2023 _Workshop on Autonomous Driving_ [Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)!
 
 **Citation:**
 
