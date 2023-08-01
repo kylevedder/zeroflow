@@ -48,7 +48,7 @@ python data_prep_scripts/argo/make_lidar_subset.py <path to argoverse2_lidar> <p
 
 ### Waymo Open
 
-Download the Scene Flow labels contributed by _Scalable Scene Flow from Point Clouds in the Real World_. We preprocess these files, both to convert them from an annoying proto file format to a standard Python format and to remove the ground points.
+Download Waymo Open v1.4.2 (earlier versions lack map information) and the scene Flow labels contributed by _Scalable Scene Flow from Point Clouds in the Real World_ from the [Waymo Open download page](https://waymo.com/open/). We preprocess these files, both to convert them from an annoying proto file format to a standard Python format and to remove the ground points.
 
 Do this using 
 
