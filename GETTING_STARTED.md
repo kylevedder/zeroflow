@@ -1,5 +1,9 @@
 # How to use this code
 
+## Model weights
+
+Model weights for all trained methods (FastFlow3D and ZeroFlow) and their ablations are provided in their own [GitHub repo](https://github.com/kylevedder/zeroflow_weights).
+
 ## File system assumptions
 
 ### Argoverse 2
@@ -20,13 +24,20 @@ argoverse2/val_sceneflow
 ```
 
 
-The [Argoverse 2 Scene Flow generation script](https://github.com/nchodosh/argoverse2-sf) to compute ground truth flows for both `train/` and `val/`.
+The [Argoverse 2 Scene Flow generation script](https://github.com/kylevedder/argoverse2-sf) to compute ground truth flows for both `train/` and `val/`.
+
+Please note that when downloaded from the cloud, these files may have a different top level directory format (their stored format keeps changing); you can solve this by moving the files or symlinking the appropriate directories into a different tree. We have uploaded [a prebuilt DockerHub image](https://hub.docker.com/repository/docker/kylevedder/argoverse2_sf/general) for running the generation script.
 
 ### Waymo Open
 
 Download the Scene Flow labels contributed by _Scalable Scene Flow from Point Clouds in the Real World_. We preprocess these files, both to convert them from an annoying proto file format to a standard Python format and to remove the ground points.
 
-Do this using the `data_prep_scripts/waymo/extract_flow_and_remove_ground.py` file in the Waymo Open docker container.
+Do this using 
+
+1. `data_prep_scripts/waymo/rasterize_heightmap.py` -- generate heightmaps in a separate folder used for ground removal
+2. `data_prep_scripts/waymo/extract_flow_and_remove_ground.py` -- extracts the points into a pickle format and removes the groundplane using the generated heightmaps
+
+in the Waymo Open docker container.
 
 ## Docker Images
 

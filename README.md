@@ -6,6 +6,10 @@ Project webpage: [vedder.io/zeroflow](http://vedder.io/zeroflow)
 
 arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 
+**News:**
+
+ - June 18th, 2023: ZeroFlow was selected as a highlighted method in the CVPR 2023 _Workshop on Autonomous Driving_ [Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)!
+
 **Citation:**
 
 ```
@@ -20,6 +24,10 @@ arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 ## Pre-requisites / Getting Started
 
 Read the [Getting Started](./GETTING_STARTED.md) doc for detailed instructions to setup the AV2 and Waymo Open datasets and use the prepared docker environments.
+
+## Pretrained weights
+
+All trained weights from the paper are available for download from [this repo](https://github.com/kylevedder/zeroflow_weights).
 
 ## Training a model
 
