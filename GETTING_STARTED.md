@@ -6,7 +6,7 @@ Model weights for all trained methods (FastFlow3D and ZeroFlow) and their ablati
 
 ## File system assumptions
 
-### Argoverse 2
+### Argoverse 2 Sensor Dataset
 
 Somewhere on disk, have an `argoverse2/` folder so that the downloaded files live inside
 
@@ -27,6 +27,24 @@ argoverse2/val_sceneflow
 The [Argoverse 2 Scene Flow generation script](https://github.com/kylevedder/argoverse2-sf) to compute ground truth flows for both `train/` and `val/`.
 
 Please note that when downloaded from the cloud, these files may have a different top level directory format (their stored format keeps changing); you can solve this by moving the files or symlinking the appropriate directories into a different tree. We have uploaded [a prebuilt DockerHub image](https://hub.docker.com/repository/docker/kylevedder/argoverse2_sf/general) for running the generation script.
+
+### Argoverse 2 LiDAR Dataset (For ZeroFlow XL)
+
+Download the full Argoverse 2 LiDAR dataset (WARNING: this dataset is 5.6 _Terabytes_ on disk) so that the downloaded files live inside
+
+```
+argoverse2_lidar/train
+argoverse2_lidar/val
+argoverse2_lidar/test
+```
+
+This dataset is enormous, so we subsample it down to the same number of problem pairs as provided by the Sensor train split, while maintaining the data diversity. We do this by taking point cloud pairs at regular intervals across all 20,000 trajectories drawn from the nominal train / val / test splits (NB: none of these sequences are labeled, and the train / val / test splits are notional for e.g. doing occupancy prediction; we simply use them as a homogeneous data source)
+
+To create this subsampled dataset we generate symlinks to the full dataset, treating each frame pair as its own sequence of length 2 so that all of our data loaders work out of the box, using the script:
+
+```
+python data_prep_scripts/argo/make_lidar_subset.py <path to argoverse2_lidar> <path to subset folder>
+```
 
 ### Waymo Open
 
