@@ -3,7 +3,7 @@ import torch.nn as nn
 
 import numpy as np
 from models.embedders import HardEmbedder, DynamicEmbedder
-from models.backbones import FastFlowUNet
+from models.backbones import FastFlowUNet, FastFlowUNetXL
 from models.heads import FastFlowDecoder, FastFlowDecoderStepDown
 from pointclouds import from_fixed_array
 from pointclouds.losses import warped_pc_loss
@@ -167,6 +167,10 @@ class FastFlow3DDistillationLoss():
         # self._visualize_regressed_ground_truth_pcs(model_res,
         #                                            gt_flow_array_stack)
 
+        assert len(estimated_flows) <= len(
+            gt_flow_array_stack
+        ), f"estimated_flows {len(estimated_flows)} > gt_flow_array_stack {len(gt_flow_array_stack)}"
+
         total_loss = 0
         # Iterate through the batch
         for est_flow, gt_flow_array in zip(estimated_flows,
@@ -311,7 +315,8 @@ class FastFlow3D(nn.Module):
                  POINT_CLOUD_RANGE,
                  FEATURE_CHANNELS,
                  SEQUENCE_LENGTH,
-                 bottleneck_head=False) -> None:
+                 bottleneck_head=False,
+                 xl_backbone=False) -> None:
         super().__init__()
         self.SEQUENCE_LENGTH = SEQUENCE_LENGTH
         assert self.SEQUENCE_LENGTH == 2, "This implementation only supports a sequence length of 2."
@@ -319,13 +324,16 @@ class FastFlow3D(nn.Module):
                                         pseudo_image_dims=PSEUDO_IMAGE_DIMS,
                                         point_cloud_range=POINT_CLOUD_RANGE,
                                         feat_channels=FEATURE_CHANNELS)
-
-        self.backbone = FastFlowUNet()
+        if xl_backbone:
+            self.backbone = FastFlowUNetXL()
+        else:
+            self.backbone = FastFlowUNet()
         if bottleneck_head:
             self.head = FastFlowDecoderStepDown(
                 voxel_pillar_size=VOXEL_SIZE[:2], num_stepdowns=3)
         else:
-            self.head = FastFlowDecoder()
+            self.head = FastFlowDecoder(pseudoimage_channels=FEATURE_CHANNELS *
+                                        2)
 
     def _model_forward(self, pc0s, pc1s):
 
