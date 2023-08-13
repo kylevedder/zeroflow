@@ -145,8 +145,7 @@ class FastFlowUNet(nn.Module):
         V = self.decoder_step4(U)
 
         return V
-
-
+    
 class FastFlowUNetXL(nn.Module):
     """
     FastFlowUNet with a 64 channel input and another conv stepdown layer.
@@ -177,7 +176,7 @@ class FastFlowUNetXL(nn.Module):
                                             ConvWithNorms(1024, 1024, 3, 1, 1),
                                             ConvWithNorms(1024, 1024, 3, 1, 1),
                                             ConvWithNorms(1024, 1024, 3, 1, 1))
-
+        
         self.decoder_step1 = UpsampleSkip(2048, 1024, 1024)
         self.decoder_step2 = UpsampleSkip(1024, 512, 512)
         self.decoder_step3 = UpsampleSkip(512, 256, 256)
