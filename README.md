@@ -56,7 +56,7 @@ After all relevant checkpoints have been tested, thus generating result files in
 ## Submitting to the AV2 Scene Flow competition
 
 1. Dump the outputs of the model
-    a. `configs/fastflow3d/argo/nsfp_distilatation_dump_output.py` to dump the `val` set result
-    b. `configs/fastflow3d/argo/nsfp_distilatation_dump_output_test.py` to dump the `test` set result
-2. Convert to the competition submission format (`av2_scene_flow_competition_submit.py`)
-3. Use official zip `make_submission_archive.py` file (`python /av2-api/src/av2/evaluation/scene_flow/make_submission_archive.py <path to step 2 results> /efs/argoverse2/test_official_masks.zip`)
+    - `configs/fastflow3d/argo/nsfp_distilatation_dump_output.py` to dump the `val` set result 
+    - `configs/fastflow3d/argo/nsfp_distilatation_dump_output_test.py` to dump the `test` set result
+3. Convert to the competition submission format (`av2_scene_flow_competition_submit.py`)
+4. Use official zip `make_submission_archive.py` file (`python /av2-api/src/av2/evaluation/scene_flow/make_submission_archive.py <path to step 2 results> /efs/argoverse2/test_official_masks.zip`)
