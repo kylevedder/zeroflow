@@ -111,7 +111,8 @@ def make_val_dataloader(cfg):
 
 
 def setup_model(cfg, checkpoint):
-    if hasattr(cfg, "is_trainable") and not cfg.is_trainable:
+    if (hasattr(cfg, "is_trainable")
+            and not cfg.is_trainable) or (checkpoint is None):
         model = ModelWrapper(cfg)
     else:
         assert checkpoint is not None, "Must provide checkpoint for validation"
@@ -189,6 +190,8 @@ def main():
         strategy=DDPStrategy(find_unused_parameters=False),
         num_sanity_val_steps=2,
         log_every_n_steps=2,
+        resume_from_checkpoint=
+        resume_from_checkpoint,  # it's called ckpt_path in 2.0 (https://lightning.ai/docs/pytorch/stable/common/trainer.html)
         val_check_interval=cfg.validate_every,
         check_val_every_n_epoch=cfg.check_val_every_n_epoch if hasattr(
             cfg, "check_val_every_n_epoch") else 1,

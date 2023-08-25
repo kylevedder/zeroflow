@@ -525,6 +525,8 @@ def merge_dict_list(dict_list):
 
 def plot_mover_nonmover_vs_error_by_category(results: List[ResultInfo],
                                              metacatagory, vmax):
+    if len(results) <= 0:
+        return
     valid_results_pretty_name_set = {
         "FastFlow3D", "FastFlow3D XL", "ZeroFlow", "ZeroFlow 2x", "ZeroFlow XL", "ZeroFlow XL 2x", "NSFP"
     }
