@@ -28,6 +28,30 @@ The [Argoverse 2 Scene Flow generation script](https://github.com/kylevedder/arg
 
 Please note that when downloaded from the cloud, these files may have a different top level directory format (their stored format keeps changing); you can solve this by moving the files or symlinking the appropriate directories into a different tree. We have uploaded [a prebuilt DockerHub image](https://hub.docker.com/repository/docker/kylevedder/argoverse2_sf/general) for running the generation script.
 
+### Argoverse 2 Tiny Demo Dataset (New!)
+
+To get started, we provide a directly downloadable [tiny demo dataset](https://github.com/kylevedder/zeroflow/files/13059582/argoverse2_tiny.zip) (5.5MB).
+
+`argoverse2_tiny` contains three subfolders:
+
+ - `argoverse2_tiny/val`: a single sequence with the single frame pair
+ - `argoverse2_tiny/val_sceneflow`: the supervised ground truth for this frame pair
+ - `argoverse2_tiny/val_supervised_out`: the output of the forward pass of our FastFlow3D 1x model on the `configs/fastflow3d/argo/supervised_tiny.py` config with our [supervised checkpoint](https://github.com/kylevedder/zeroflow_weights/blob/master/argo/supervised/supervised.ckpt), i.e.
+ 
+ ```
+ python test_pl.py configs/fastflow3d/argo/supervised_tiny.py --checkpoint /efs/sceneflow_golden_weights/argo/supervised/supervised.ckpt
+ ```
+
+Visualizing these results with 
+
+```
+python visualization/visualize_unsupervised_flow.py 
+```
+
+produces the following visualization of the ego vehicle (the center is depicted as the 1m red ball) driving across a bridge with a car driving in the opposite direction.
+
+![2023-10-20-221519_1065x966_scrot](https://github.com/kylevedder/zeroflow/assets/6148088/725da9a0-81c1-472f-a58e-c408ca8c8b26)
+
 ### Argoverse 2 LiDAR Dataset (For ZeroFlow XL)
 
 Download the full Argoverse 2 LiDAR dataset (WARNING: this dataset is 5.6 _Terabytes_ on disk) so that the downloaded files live inside
