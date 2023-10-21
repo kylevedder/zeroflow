@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 import math
 import shutil
+import tqdm
 
 # Get path to argoverse lidar dataset and number of sequences per job
 parser = argparse.ArgumentParser()
@@ -25,8 +26,10 @@ assert args.base_config.is_file(
 
 assert args.runtime_mins > 0, f"Runtime must be positive"
 
+print(f"Looking for sequence folders in {args.lidar_path}")
 sequence_folders = sorted([c for c in args.lidar_path.glob("*") if c.is_dir()],
                           key=lambda x: x.name.lower())
+print(f"Found {len(sequence_folders)} sequences folders")
 num_jobs = math.ceil(len(sequence_folders) / args.sequences_per_job)
 
 print(f"Splitting {len(sequence_folders)} sequences into {num_jobs} jobs")
@@ -118,7 +121,7 @@ def make_sbatch():
 #SBATCH --cpus-per-gpu=2
 #SBATCH --exclude=kd-2080ti-2.grasp.maas
 #SBATCH --array=0-{len(job_sequence_names_lst) - 1}
-#SBATCH --container-mounts=../../datasets/:/efs/,{current_working_dir}:/project
+#SBATCH --container-mounts=../../datasets/:/efs/,{current_working_dir}:/project,/mnt/kostas-graid/:/mnt/kostas-graid/,/mnt/kostas-graid/datasets/argoverse_lidar_subsampled_all_hdd:/efs/argoverse_lidar_subsampled_all,/mnt/kostas-graid/datasets/argoverse_lidar_subsampled_all_complimentary:/efs/argoverse_lidar_subsampled_all_complimentary,/mnt/kostas-graid/datasets/argoverse2/val:/efs/argoverse2/val,/mnt/kostas-graid/datasets/argoverse2/val_sceneflow:/efs/argoverse2/val_sceneflow,/mnt/kostas-graid/datasets/argoverse2/train_sceneflow:/efs/argoverse2/train_sceneflow,/mnt/kostas-graid/datasets/argoverse2/train_nsfp_flow:/efs/argoverse2/train_nsfp_flow
 #SBATCH --container-image={current_working_dir / "kylevedder_offline_sceneflow_latest.sqsh"}
 
 echo "Running job $SLURM_ARRAY_TASK_ID on $HOSTNAME"
@@ -129,7 +132,7 @@ python test_pl.py {configs_path}/nsfp_split_$MY_RUN_ID.py; echo 'done' > {config
         f.write(sbatch_file_content)
 
 
-for i, job_sequence_names in enumerate(job_sequence_names_lst):
+for i, job_sequence_names in enumerate(tqdm.tqdm(job_sequence_names_lst)):
     make_config(i, job_sequence_names)
     if i % 100 == 0:
         print(f"Made configs for {i} jobs")

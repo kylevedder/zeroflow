@@ -20,14 +20,13 @@ from configs.pseudoimage import POINT_CLOUD_RANGE, VOXEL_SIZE
 
 parser = argparse.ArgumentParser()
 # dataset type (train, val), default to val
+parser.add_argument('dataset_source', type=Path)
+parser.add_argument('result_output_folder', type=Path)
+parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--dataset_type',
                     type=str,
                     default='val',
                     choices=['train', 'val'])
-parser.add_argument('--dataset_source',
-                    type=str,
-                    default='nsfp',
-                    choices=['nsfp', 'odom', 'nearest_neighbor', 'chodosh', 'distilation', 'supervised', 'chodosh_distilation'])
 parser.add_argument('--step_size',
                     type=int,
                     default=5,
@@ -36,7 +35,11 @@ parser.add_argument('--num_workers',
                     type=int,
                     default=multiprocessing.cpu_count(),
                     help='number of workers')
+parser.add_argument('--data_root', type=Path, default=Path('/efs/argoverse2'))
 args = parser.parse_args()
+
+assert args.dataset_source.exists(), f"{args.dataset_source} does not exist"
+args.result_output_folder.mkdir(parents=True, exist_ok=True)
 
 assert args.step_size > 0, 'step_size must be positive'
 
@@ -186,7 +189,8 @@ def accumulate_flow_scatter(supervised_flow,
 
 
 def process_sequence(sequence_id):
-
+    if args.verbose:
+        print("Processing sequence: ", sequence_id)
     unsupervised_sequence = unsupervised_sequence_loader.load_sequence(
         sequence_id)
     supervised_sequence = supervised_sequence_loader.load_sequence(sequence_id)
@@ -226,23 +230,26 @@ def process_sequence(sequence_id):
     accumulation_grid_unrotated = np.sum(accumulation_grid_lst_unrotated,
                                          axis=0)
     save_dir.mkdir(parents=True, exist_ok=True)
+    if args.verbose:
+        print("Saving to ", save_dir / f'{sequence_id}_error_distribution.npy')
+        print("Saving to ",
+              save_dir / f'{sequence_id}_error_distribution_unrotated.npy')
     np.save(save_dir / f'{sequence_id}_error_distribution.npy',
             accumulation_grid)
     np.save(save_dir / f'{sequence_id}_error_distribution_unrotated.npy',
             accumulation_grid_unrotated)
 
 
-data_root = Path('/efs/argoverse2/')
+data_root = args.data_root
 
 unsupervised_sequence_loader = ArgoverseUnsupervisedFlowSequenceLoader(
-    data_root / args.dataset_type,
-    data_root / f'{args.dataset_type}_{args.dataset_source}_flow/')
+    data_root / args.dataset_type, args.dataset_source)
 
 supervised_sequence_loader = ArgoverseSupervisedFlowSequenceLoader(
     data_root / args.dataset_type,
     data_root / f'{args.dataset_type}_sceneflow/')
 
-save_dir = data_root / f'{args.dataset_type}_{args.dataset_source}_unsupervised_vs_supervised_flow'
+save_dir = args.result_output_folder / f'{args.dataset_type}_unsupervised_vs_supervised_flow'
 
 unsupervised_sequences = set(unsupervised_sequence_loader.get_sequence_ids())
 supervised_sequences = set(supervised_sequence_loader.get_sequence_ids())
@@ -261,3 +268,20 @@ else:
     joblib.Parallel(n_jobs=args.num_workers, verbose=10)(
         joblib.delayed(process_sequence)(sequence_id)
         for sequence_id in tqdm.tqdm(sorted(overlapping_sequences)))
+
+# Merge the results into a single npy file
+rotated_glob_path = sorted(save_dir.glob("*_error_distribution.npy"))
+unrotated_glob_path = sorted(
+    save_dir.glob("*_error_distribution_unrotated.npy"))
+
+accumulation_grid_lst_rotated = [np.load(path) for path in rotated_glob_path]
+accumulation_grid_lst_unrotated = [
+    np.load(path) for path in unrotated_glob_path
+]
+
+accumulation_grid = np.sum(accumulation_grid_lst_rotated, axis=0)
+accumulation_grid_unrotated = np.sum(accumulation_grid_lst_unrotated, axis=0)
+
+np.save(save_dir / f'error_distribution_accumulated.npy', accumulation_grid)
+np.save(save_dir / f'error_distribution_accumulated_unrotated.npy',
+        accumulation_grid_unrotated)

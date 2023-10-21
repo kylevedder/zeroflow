@@ -88,7 +88,7 @@ class SubsequenceRawDataset(torch.utils.data.Dataset):
         sequence = self.sequence_loader.load_sequence(id)
         assert len(
             sequence
-        ) >= self.max_sequence_length, f"actual len(sequence) must be >= promised self.max_sequence_length, got {len(sequence)} vs {self.max_sequence_length}"
+        ) >= self.max_sequence_length, f"actual len(sequence) must be >= promised self.max_sequence_length, got {len(sequence)} vs {self.max_sequence_length} for id {id}"
 
         if self.origin_mode == OriginMode.FIRST_ENTRY:
             origin_idx = subsequence_begin_index

@@ -14,9 +14,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('lidar_path', type=Path)
 parser.add_argument('output_folder', type=Path)
 parser.add_argument('--num_pairs', type=int, default=12)
+parser.add_argument('--chunk_offset', type=float, default=0)
+parser.add_argument('--copy_files', action='store_true')
+parser.add_argument('--cpu_count', type=int, default=multiprocessing.cpu_count())
 args = parser.parse_args()
 
 assert args.num_pairs > 0, f"Number of pairs must be positive (got {args.num_pairs})"
+assert 1 >= args.chunk_offset >= 0, f"Chunk offset must be between 0 and 1 (got {args.chunk_offset})"
+assert args.cpu_count > 0, f"CPU count must be positive (got {args.cpu_count})"
 
 assert args.lidar_path.is_dir(), f"Path {args.lidar_path} is not a directory"
 # Check that the directory contains the expected number of sequences
@@ -37,8 +42,9 @@ def get_sequence_pairs(
     lidar_files = sorted(sequence_folder.glob("sensors/lidar/*.feather"))
     # We need num_pairs per trajectory
     chunk_step_size = (len(lidar_files) - 1) // (num_pairs - 1)
-    frame_t = lidar_files[::chunk_step_size]
-    frame_t1 = lidar_files[1::chunk_step_size]
+    chunk_offset = int(args.chunk_offset * chunk_step_size)
+    frame_t = lidar_files[chunk_offset::chunk_step_size]
+    frame_t1 = lidar_files[chunk_offset + 1::chunk_step_size]
     frame_pairs = list(zip(frame_t, frame_t1))
     return [(sequence_folder, frame_pair) for frame_pair in frame_pairs]
 
@@ -62,19 +68,28 @@ def save_sequence_pair(input: Tuple[Path, Tuple[Path, Path]]):
     for subfolder in ["calibration", "map", "city_SE3_egovehicle.feather"]:
         subfolder_path = sequence_folder / subfolder
         output_subfolder_path = output_sequence_folder / subfolder
-        output_subfolder_path.symlink_to(subfolder_path)
+
+        if args.copy_files:
+            shutil.copytree(subfolder_path, output_subfolder_path, symlinks=False)
+        else:
+            output_subfolder_path.symlink_to(subfolder_path)
 
     # Symlink the lidar files
     output_lidar_folder = output_sequence_folder / "sensors/lidar"
     output_lidar_folder.mkdir(exist_ok=True, parents=True)
     output_lidar_t = output_lidar_folder / frame_t.name
-    output_lidar_t.symlink_to(frame_t)
     output_lidar_t1 = output_lidar_folder / frame_t1.name
-    output_lidar_t1.symlink_to(frame_t1)
+
+    if args.copy_files:
+        shutil.copy(frame_t, output_lidar_t)
+        shutil.copy(frame_t1, output_lidar_t1)
+    else:
+        output_lidar_t.symlink_to(frame_t)
+        output_lidar_t1.symlink_to(frame_t1)
 
 
 print("Getting sequence pairs...")
-with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+with multiprocessing.Pool(processes=args.cpu_count) as pool:
     folder_frame_lst = list(
         tqdm.tqdm(pool.imap_unordered(get_sequence_pairs, sequence_folders),
                   total=len(sequence_folders)))
@@ -83,7 +98,7 @@ with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
 folder_frame_lst = [item for sublist in folder_frame_lst for item in sublist]
 
 print("Saving sequence pairs...")
-with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+with multiprocessing.Pool(processes=args.cpu_count) as pool:
     # pool.starmap(save_sequence_pair, folder_frame_lst)
     list(
         tqdm.tqdm(pool.imap_unordered(save_sequence_pair, folder_frame_lst),

@@ -15,142 +15,24 @@ import time
 
 class FastFlow3DSelfSupervisedLoss():
 
-    def __init__(self, warp_upscale: float, device: str = None):
+    def __init__(self, device: str = None):
         super().__init__()
-        self.warp_upscale = warp_upscale
 
     def _warped_loss(self, model_res):
-        flows = model_res["flow"]
+        estimated_flows = model_res["flow"]
         pc0_points_lst = model_res["pc0_points_lst"]
         pc1_points_lst = model_res["pc1_points_lst"]
 
         warped_loss = 0
-        for flow, pc0_points, pc1_points in zip(flows, pc0_points_lst,
+        for flow, pc0_points, pc1_points in zip(estimated_flows, pc0_points_lst,
                                                 pc1_points_lst):
             pc0_warped_to_pc1_points = pc0_points + flow
             warped_loss += warped_pc_loss(pc0_warped_to_pc1_points,
-                                          pc1_points) * self.warp_upscale
+                                          pc1_points)
         return warped_loss
 
-    def _triangle_loss(self, forward_res, backward_res):
-        forward_flows = forward_res["flow"]
-        backward_flows = backward_res["flow"]
-        # These are the idxes of the forward flow present in the backwards flow
-        valid_forward_flow_idxes = backward_res["pc0_valid_point_idxes"]
-
-        triangle_loss = 0
-        for forward_flow, backward_flow, valid_forward_flow_idx in zip(
-                forward_flows, backward_flows, valid_forward_flow_idxes):
-            forward_flow_valid_in_backward_flow = forward_flow[
-                valid_forward_flow_idx]
-
-            triangle_error = torch.norm(forward_flow_valid_in_backward_flow +
-                                        backward_flow,
-                                        dim=1,
-                                        p=2)
-            triangle_loss += torch.mean(triangle_error)
-        return triangle_loss
-
-    def _symmetry_loss(self, model_res, flipped_res, idx):
-        flows = model_res["flow"]
-        flipped_flows = flipped_res["flow"]
-        symmetry_loss = 0
-        for flow, flipped_flow in zip(flows, flipped_flows):
-            # Other than the y axis, the flows should be the same
-            # Negate the y axis of the flipped flow, then subtract the two flows should produce a zero flow
-            flipped_flow[:, idx] = -flipped_flow[:, idx]
-            symmetry_loss += torch.mean(
-                torch.norm(flow - flipped_flow, dim=1, p=2))
-
-        return symmetry_loss
-
     def __call__(self, input_batch, model_res_dict: Dict[str, Dict[str, Any]]):
-        warped_loss = self._warped_loss(model_res_dict["forward"])
-        # self._visualize_regressed_ground_truth_pcs(model_res_dict["forward"])
-
-        res_dict = {
-            "warped_loss": warped_loss,
-        }
-
-        total_loss = warped_loss
-
-        if "backward" in model_res_dict:
-            triangle_loss = self._triangle_loss(model_res_dict["forward"],
-                                                model_res_dict["backward"])
-            total_loss += triangle_loss
-            res_dict["triangle_loss"] = triangle_loss
-
-        if "symmetry_x" in model_res_dict:
-            symmetry_loss = self._symmetry_loss(model_res_dict["forward"],
-                                                model_res_dict["symmetry_x"],
-                                                0)
-            total_loss += symmetry_loss
-            res_dict["symmetry_x_loss"] = symmetry_loss
-
-        if "symmetry_y" in model_res_dict:
-            symmetry_loss = self._symmetry_loss(model_res_dict["forward"],
-                                                model_res_dict["symmetry_y"],
-                                                1)
-            total_loss += symmetry_loss
-            res_dict["symmetry_y_loss"] = symmetry_loss
-
-        res_dict["loss"] = total_loss
-
-        return res_dict
-
-    def _visualize_regressed_ground_truth_pcs(self, model_res):
-        regressed_flowed_pc0_to_pc1 = model_res["flow"]
-        pc0_pc = model_res["pc0_points_lst"]
-        pc1_pc = model_res["pc1_points_lst"]
-        import open3d as o3d
-        import numpy as np
-        pc0_pc = pc0_pc.detach().cpu().numpy()
-        pc1_pc = pc1_pc.detach().cpu().numpy()
-        regressed_flowed_pc0_to_pc1 = regressed_flowed_pc0_to_pc1.detach().cpu(
-        ).numpy()
-        # make open3d visualizer
-        vis = o3d.visualization.Visualizer()
-        vis.create_window()
-        vis.get_render_option().point_size = 1.5
-        vis.get_render_option().background_color = (0, 0, 0)
-        vis.get_render_option().show_coordinate_frame = True
-        # set up vector
-        vis.get_view_control().set_up([0, 0, 1])
-
-        # Add input PC
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(pc0_pc)
-        pc_color = np.zeros_like(pc0_pc)
-        pc_color[:, 0] = 1
-        pc_color[:, 1] = 1
-        pcd.colors = o3d.utility.Vector3dVector(pc_color)
-        vis.add_geometry(pcd)
-
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(pc1_pc)
-        pc_color = np.zeros_like(pc1_pc)
-        pc_color[:, 1] = 1
-        pc_color[:, 2] = 1
-        pcd.colors = o3d.utility.Vector3dVector(pc_color)
-        vis.add_geometry(pcd)
-
-        # Add line set between pc0 and regressed pc1
-        line_set = o3d.geometry.LineSet()
-        assert len(pc0_pc) == len(
-            regressed_flowed_pc0_to_pc1
-        ), f"{len(pc0_pc)} != {len(regressed_flowed_pc0_to_pc1)}"
-        line_set_points = np.concatenate([pc0_pc, regressed_flowed_pc0_to_pc1],
-                                         axis=0)
-
-        lines = np.array([[i, i + len(regressed_flowed_pc0_to_pc1)]
-                          for i in range(len(pc0_pc))])
-        line_set.points = o3d.utility.Vector3dVector(line_set_points)
-        line_set.lines = o3d.utility.Vector2iVector(lines)
-        line_set.colors = o3d.utility.Vector3dVector(
-            [[0, 0, 1] for _ in range(len(lines))])
-        vis.add_geometry(line_set)
-
-        vis.run()
+        return {'loss' : self._warped_loss(model_res_dict["forward"])} 
 
 
 class FastFlow3DDistillationLoss():

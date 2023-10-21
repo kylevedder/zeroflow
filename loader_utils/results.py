@@ -49,7 +49,7 @@ ENDPOINT_ERROR_SPLITS_METERS = [0, 0.05, 0.1, np.inf]
 
 BACKGROUND_CATEGORIES = [
     'BOLLARD', 'CONSTRUCTION_BARREL', 'CONSTRUCTION_CONE',
-    'MOBILE_PEDESTRIAN_CROSSING_SIGN', 'SIGN', 'STOP_SIGN'
+    'MOBILE_PEDESTRIAN_CROSSING_SIGN', 'SIGN', 'STOP_SIGN', 'BACKGROUND'
 ]
 PEDESTRIAN_CATEGORIES = [
     'PEDESTRIAN', 'STROLLER', 'WHEELCHAIR', 'OFFICIAL_SIGNALER'
@@ -157,10 +157,13 @@ class ResultInfo():
             "fastflow3d_nsfp_distilatation_speed_scaled": "ZeroFlow",
             "fastflow3d_supervised": "FastFlow3D",
             "fastflow3d_supervised_xl_backbone": "FastFlow3D XL",
-            "fastflow3d_chodosh_distilatation": "ZeroFlow (Chodosh et al. pseudolabels, No Scale)",
-            "fastflow3d_chodosh_distilatation_speed_scaled": "ZeroFlow (Chodosh et al. pseudolabels)",
+            "fastflow3d_chodosh_distilatation":
+            "ZeroFlow (Chodosh et al. pseudolabels, No Scale)",
+            "fastflow3d_chodosh_distilatation_speed_scaled":
+            "ZeroFlow (Chodosh et al. pseudolabels)",
             "fastflow3d_supervised_no_scale": "FastFlow3D (no scale)",
-            "fastflow3d_supervised_speed_scaled_batch8_train": "FastFlow3D (speed scale)",
+            "fastflow3d_supervised_speed_scaled_batch8_train":
+            "FastFlow3D (speed scale)",
             "nsfp_unsupervised_sensor_val_cached": "NSFP",
         }
         if self.name in name_dict:
@@ -259,24 +262,15 @@ class ResultInfo():
         for metacatagory in mover_metacatagories:
             error_sum, error_count = self.get_metacatagory_error_count_by_speed(
                 metacatagory)
-            # Extract the non-background error
+            # Extract the background error
             total_error += error_sum[0]
             total_count += error_count[0]
 
         return total_error / total_count
 
     def get_nonmover_point_epe(self):
-        mover_metacatagories = set(METACATAGORIES.keys()) - {"BACKGROUND"}
-
         total_error = 0
         total_count = 0
-
-        # Sum up the stationary components of the movers
-        for metacatagory in mover_metacatagories:
-            error_sum, error_count = self.get_metacatagory_error_count_by_speed(
-                metacatagory)
-            total_error += error_sum[0]
-            total_count += error_count[0]
 
         error_sum, error_count = self.get_metacatagory_error_count_by_speed(
             "BACKGROUND")

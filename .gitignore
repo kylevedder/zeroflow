@@ -20,3 +20,4 @@ job_dir/
 cluster_tb_logs/
 *_tb_logs/
 **.zip
+checkpoint_eval_launch_dir/

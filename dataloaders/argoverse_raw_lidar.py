@@ -63,13 +63,19 @@ class ArgoverseRawSequence():
         ) == 1, f'Expected 1 raster, got {len(raster_height_paths)} in path {self.dataset_dir / "map"}'
         raster_height_path = raster_height_paths[0]
 
+        assert raster_height_path.exists(), f'File {raster_height_path} not found'
+
         transform_paths = list(
             (self.dataset_dir / 'map').glob("*img_Sim2_city.json"))
         assert len(transform_paths
                    ) == 1, f'Expected 1 transform, got {len(transform_paths)}'
         transform_path = transform_paths[0]
 
-        raster_heightmap = np.load(raster_height_path)
+        try:
+            raster_heightmap = np.load(raster_height_path, allow_pickle=True)
+        except Exception as e:
+            print(f'Error loading {raster_height_path}')
+            raise e
         transform = load_json(transform_path, verbose=False)
 
         transform_rotation = np.array(transform['R']).reshape(2, 2)

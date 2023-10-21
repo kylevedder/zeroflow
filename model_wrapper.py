@@ -422,7 +422,13 @@ class ModelWrapper(pl.LightningModule):
         return d
 
     def _save_validation_data(self, save_dict):
-        save_pickle(f"validation_results/{self.cfg.filename}.pkl", save_dict)
+        # We want to both save the validation results as a pickle with global step info,
+        # and have the generic file update.
+        generic_file = Path(f"validation_results/{self.cfg.filename}.pkl")
+        save_pickle(generic_file, save_dict)
+        specific_step_file = Path(
+            f"validation_results/{self.cfg.filename}_{self.global_step}.pkl")
+        save_pickle(specific_step_file, save_dict)
         try:
             timing_out = f"validation_results/{self.cfg.filename}_timing.csv"
             nntime.export_timings(self, timing_out)
@@ -488,6 +494,8 @@ class ModelWrapper(pl.LightningModule):
 
         if self.global_rank != 0:
             return {}
+        
+
 
         validation_result_dict = {
             "per_class_bucketed_error_sum": per_class_bucketed_error_sum,

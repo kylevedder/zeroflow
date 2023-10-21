@@ -5,7 +5,7 @@ sys.path.insert(0, '.')
 
 import argparse
 from pathlib import Path
-import time
+from typing import List,Optional
 from loader_utils import run_cmd
 
 parser = argparse.ArgumentParser()
@@ -19,8 +19,8 @@ parser.add_argument('--runtime_hours', type=int, default=None)
 parser.add_argument('--job_name', type=str, default='ff3d')
 parser.add_argument('--qos', type=str, default='ee-med')
 parser.add_argument('--partition', type=str, default='eaton-compute')
+parser.add_argument('--dependency', type=int, default=None)
 parser.add_argument('--dry_run', action='store_true')
-parser.add_argument('--use_srun', action='store_true')
 parser.add_argument('--blacklist_substring', type=str, default=None)
 args = parser.parse_args()
 
@@ -60,6 +60,8 @@ def get_node_blacklist():
         return False
 
     node_blacklist = [node for node in node_list if is_blacklisted(node)]
+    # Deduplicate list
+    node_blacklist = list(set(node_blacklist))
     print(f"Blacklisted nodes: {node_blacklist}")
     return node_blacklist
 
@@ -79,17 +81,49 @@ def make_command_file(command):
         f.write(command_file_content)
 
 
-def make_srun():
-    srun_path = jobdir_path / f"srun.sh"
-    docker_image_path = Path(
-        "kylevedder_offline_sceneflow_latest.sqsh").absolute()
-    assert docker_image_path.is_file(
-    ), f"Docker image {docker_image_path} squash file does not exist"
-    srun_file_content = f"""#!/bin/bash
-srun --gpus={args.num_gpus} --nodes=1 --mem-per-gpu={args.mem_per_gpu}G --cpus-per-gpu={args.cpus_per_gpu} --time={get_runtime_format(job_runtime_mins)} --exclude={','.join(node_blacklist)} --job-name={args.job_name} --qos={args.qos} --partition={args.partition} --container-mounts=../../datasets/:/efs/,`pwd`:/project --container-image={docker_image_path} bash {jobdir_path}/command.sh
+def make_gpu_config():
+    return f"""#SBATCH --gpus={args.num_gpus}
+#SBATCH --mem-per-gpu={args.mem_per_gpu}G
+#SBATCH --cpus-per-gpu={args.cpus_per_gpu}"""
+
+def make_cpu_config():
+    return f"""#SBATCH --mem-per-cpu={args.mem_per_gpu // args.cpus_per_gpu}G
+#SBATCH --cpus-per-task={args.cpus_per_gpu}"""
+
+
+
+
+
+def make_sbatch_file_content(current_working_dir: Path, docker_image_path: Path, is_gpu : bool):
+    mount_dict = {
+        "../../datasets/": "/efs/",
+        current_working_dir:"/project",
+        "/mnt/kostas-graid/":"/mnt/kostas-graid/",
+        "/mnt/kostas-graid/datasets/argoverse_lidar_subsampled_all_hdd": "/efs/argoverse_lidar_subsampled_all",
+        "/mnt/kostas-graid/datasets/argoverse_lidar_subsampled_all_complimentary": "/efs/argoverse_lidar_subsampled_all_complimentary",
+        "/mnt/kostas-graid/datasets/argoverse2/val":"/efs/argoverse2/val",
+        "/mnt/kostas-graid/datasets/argoverse2/val_sceneflow":"/efs/argoverse2/val_sceneflow",
+        "/mnt/kostas-graid/datasets/argoverse2/train_sceneflow":"/efs/argoverse2/train_sceneflow",
+        "/mnt/kostas-graid/datasets/argoverse2/train_nsfp_flow":"/efs/argoverse2/train_nsfp_flow",
+
+    }
+
+    return f"""#!/bin/bash
+#SBATCH --job-name={args.job_name}
+#SBATCH --qos={args.qos}
+#SBATCH --partition={args.partition}
+#SBATCH --nodes=1
+#SBATCH --output={jobdir_path}/job.out
+#SBATCH --error={jobdir_path}/job.err
+#SBATCH --time={get_runtime_format(job_runtime_mins)}
+#SBATCH --dependency={"afterok:" + str(args.dependency) if args.dependency is not None else ""}
+{make_gpu_config() if is_gpu else make_cpu_config()}
+#SBATCH --exclude={','.join(node_blacklist)}
+#SBATCH --container-mounts={','.join([f"{k}:{v}" for k,v in mount_dict.items()])}
+#SBATCH --container-image={docker_image_path}
+
+bash {jobdir_path}/command.sh && echo 'done' > {jobdir_path}/job.done
 """
-    with open(srun_path, "w") as f:
-        f.write(srun_file_content)
 
 
 def make_sbatch():
@@ -99,60 +133,31 @@ def make_sbatch():
         "kylevedder_offline_sceneflow_latest.sqsh").absolute()
     assert docker_image_path.is_file(
     ), f"Docker image {docker_image_path} squash file does not exist"
-    sbatch_file_content = f"""#!/bin/bash
-#SBATCH --job-name={args.job_name}
-#SBATCH --qos={args.qos}
-#SBATCH --partition={args.partition}
-#SBATCH --nodes=1
-#SBATCH --output={jobdir_path}/job.out
-#SBATCH --error={jobdir_path}/job.err
-#SBATCH --time={get_runtime_format(job_runtime_mins)}
-#SBATCH --gpus={args.num_gpus}
-#SBATCH --mem-per-gpu={args.mem_per_gpu}G
-#SBATCH --cpus-per-gpu={args.cpus_per_gpu}
-#SBATCH --exclude={','.join(node_blacklist)}
-#SBATCH --container-mounts=../../datasets/:/efs/,{current_working_dir}:/project
-#SBATCH --container-image={docker_image_path}
 
-bash {jobdir_path}/command.sh && echo 'done' > {jobdir_path}/job.done
-"""
+    sbatch_file_content = make_sbatch_file_content(current_working_dir,
+                                            docker_image_path, args.num_gpus > 0)
+
     with open(sbatch_path, "w") as f:
         f.write(sbatch_file_content)
 
 
-def make_screen():
-    screen_path = jobdir_path / f"screen.sh"
-    screen_file_content = f"""#!/bin/bash
-screen -L -Logfile {jobdir_path}/stdout.log -dmS {args.job_name} bash {jobdir_path}/srun.sh
-"""
-    with open(screen_path, "w") as f:
-        f.write(screen_file_content)
-
-
 node_blacklist = get_node_blacklist()
 make_command_file(args.command)
-if args.use_srun:
-    make_srun()
-    make_screen()
-else:
-    make_sbatch()
+make_sbatch()
 if not args.dry_run:
-    if args.use_srun:
-        run_cmd(f"bash {jobdir_path}/screen.sh")
-    else:
-        print("RUN THIS COMMAND TO SUBMIT THE JOB:")
-        print("|")
-        print("|")
-        print("|")
-        print("|")
-        print("|")
-        print("V")
-        print(f"sbatch {jobdir_path}/sbatch.bash")
-        print("^")
-        print("|")
-        print("|")
-        print("|")
-        print("|")
-        print("|")
+    print("RUN THIS COMMAND TO SUBMIT THE JOB:")
+    print("|")
+    print("|")
+    print("|")
+    print("|")
+    print("|")
+    print("V")
+    print(f"sbatch {jobdir_path}/sbatch.bash")
+    print("^")
+    print("|")
+    print("|")
+    print("|")
+    print("|")
+    print("|")
 
 print(f"Config files written to {jobdir_path.absolute()}")

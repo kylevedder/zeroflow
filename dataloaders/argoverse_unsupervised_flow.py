@@ -34,7 +34,12 @@ class ArgoverseUnsupervisedFlowSequence(ArgoverseRawSequence):
             return None, None
 
         flow_data_file = self.flow_data_files[idx]
-        flow_info = dict(np.load(flow_data_file))
+        try:
+            raw_flow_info = np.load(flow_data_file)
+        except Exception as e:
+            print(f'Error loading {flow_data_file}')
+            raise e
+        flow_info = dict(raw_flow_info)
         flow_0_1, valid_idxes = flow_info['flow'], flow_info['valid_idxes']
         return flow_0_1, valid_idxes
 
@@ -95,6 +100,10 @@ class ArgoverseUnsupervisedFlowSequenceLoader():
         self.sequence_id_list = sorted(
             set(self.sequence_id_to_raw_data.keys()).intersection(
                 set(self.sequence_id_to_flow_data.keys())))
+
+        print(f"Found {len(self.sequence_id_to_raw_data)} raw data sequences inside {self.raw_data_path}")
+        print(f"Found {len(self.sequence_id_to_flow_data)} flow data sequences inside {self.flow_data_path}")
+        print(f"Found {len(self.sequence_id_list)} sequences with both raw and flow data")
 
         if log_subset is not None:
             self.sequence_id_list = [

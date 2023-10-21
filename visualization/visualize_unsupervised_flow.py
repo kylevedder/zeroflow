@@ -35,9 +35,9 @@ def voxel_restrict_pointcloud(pc: PointCloud):
 
 
 sequence_loader = ArgoverseUnsupervisedFlowSequenceLoader(
-    '/efs/argoverse2/val/', '/efs/argoverse2/val_nsfp_flow/')
+    '/efs/argoverse2_tiny/val/', '/efs/argoverse2_tiny/val_supervised_out/')
 
-sequence_id = sequence_loader.get_sequence_ids()[1]
+sequence_id = sequence_loader.get_sequence_ids()[0]
 print("Sequence ID: ", sequence_id)
 sequence = sequence_loader.load_sequence(sequence_id)
 
@@ -58,17 +58,18 @@ def sequence_idx_to_color(idx):
 
 
 frame_list = sequence.load_frame_list(None)
-for idx, frame_dict in enumerate(tqdm.tqdm(frame_list[1:13])):
+for idx, frame_dict in enumerate(tqdm.tqdm(frame_list[:-1])):
     pc = frame_dict['relative_pc']
     pc = voxel_restrict_pointcloud(pc)
     pose = frame_dict['relative_pose']
-    flow = frame_dict['flow'][0]
+    flow = frame_dict['flow']
     assert flow is not None, 'flow must not be None'
     flowed_pc = pc.flow(flow)
 
     # Add base point cloud
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(pc.points)
+    pcd.paint_uniform_color([1, 1, 1])
     vis.add_geometry(pcd)
 
     # Add flowed point cloud
