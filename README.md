@@ -1,5 +1,7 @@
 # ZeroFlow: Scalable Scene Flow via Distillation
 
+**Note: This is the ICLR 2024 version of ZeroFlow. For the latest version of ZeroFlow, see the [master](https://github.com/kylevedder/zeroflow/tree/master) branch**.
+
 [Kyle Vedder](http://vedder.io), [Neehar Peri](http://www.neeharperi.com/), [Nathaniel Chodosh](https://scholar.google.com/citations?user=b4qKr7gAAAAJ&hl=en), [Ishan Khatri](https://ishan.khatri.io/), [Eric Eaton](https://www.seas.upenn.edu/~eeaton/), [Dinesh Jayaraman](https://www.seas.upenn.edu/~dineshj/), [Yang Liu](https://youngleox.github.io/), [Deva Ramanan](https://www.cs.cmu.edu/~deva/), and [James Hays](https://faculty.cc.gatech.edu/~hays/)
 
 Project webpage: [vedder.io/zeroflow](http://vedder.io/zeroflow)
