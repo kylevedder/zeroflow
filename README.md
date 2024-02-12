@@ -8,18 +8,20 @@ arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 
 **News:**
 
-- July 31st, 2023: The ZeroFlow XL student model is now **state-of-the-art** on the [Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)! See the [Getting Started](./GETTING_STARTED.md) document for details on setting up training on additional data.
+- **Feb 12th, 2024: This codebase has been deprecated. For new development, please use [SceneFlowZoo](https://github.com/kylevedder/SceneFlowZoo) which is based on a clean version of this codebase.**
+- Jan 16th, 2024: ZeroFlow has been accepted to ICLR 2024!
+- July 31st, 2023: The ZeroFlow XL student model is now **state-of-the-art** on the [AV2 2023 Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)! See the [Getting Started](./GETTING_STARTED.md) document for details on setting up training on additional data.
  - June 18th, 2023: ZeroFlow was selected as a highlighted method in the CVPR 2023 _Workshop on Autonomous Driving_ [Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)!
  
 
 **Citation:**
 
 ```
-@article{Vedder2023zeroflow,
+@article{Vedder2024zeroflow,
     author    = {Kyle Vedder and Neehar Peri and Nathaniel Chodosh and Ishan Khatri and Eric Eaton and Dinesh Jayaraman and Yang Liu Deva Ramanan and James Hays},
-    title     = {{ZeroFlow: Scalable Scene Flow via Distillation}},
-    journal   = {arXiv},
-    year      = {2023},
+    title     = {{ZeroFlow: Fast Zero Label Scene Flow via Distillation}},
+    journal   = {International Conference on Learning Representations (ICLR)},
+    year      = {2024},
 }
 ```
 
@@ -53,7 +55,7 @@ python test_pl.py <my config path> <my checkpoint path> --gpus <num gpus>
 
 After all relevant checkpoints have been tested, thus generating result files in `validation_results/configs/...`, run `plot_performance.py` to generate the figures and tables used in the paper.
 
-## Submitting to the AV2 Scene Flow competition
+## Submitting to the [AV2 2023 Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)
 
 1. Dump the outputs of the model
     - `configs/fastflow3d/argo/nsfp_distilatation_dump_output.py` to dump the `val` set result 
