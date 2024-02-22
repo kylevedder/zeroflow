@@ -9,6 +9,7 @@ arXiv link: [arxiv.org/abs/2305.10424](http://arxiv.org/abs/2305.10424)
 **News:**
 
 - **Feb 12th, 2024: This codebase has been deprecated. For new development, please use [SceneFlowZoo](https://github.com/kylevedder/SceneFlowZoo) which is based on a clean version of this codebase.**
+- Feb 12th, 2024: The [Getting Started](./GETTING_STARTED.md) has been updated with a link to our NSFP pseudolabels.
 - Jan 16th, 2024: ZeroFlow has been accepted to ICLR 2024!
 - July 31st, 2023: The ZeroFlow XL student model is now **state-of-the-art** on the [AV2 2023 Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)! See the [Getting Started](./GETTING_STARTED.md) document for details on setting up training on additional data.
  - June 18th, 2023: ZeroFlow was selected as a highlighted method in the CVPR 2023 _Workshop on Autonomous Driving_ [Scene Flow Challenge](https://eval.ai/web/challenges/challenge-page/2010/overview)!
