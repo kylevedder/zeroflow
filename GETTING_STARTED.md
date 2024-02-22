@@ -28,7 +28,21 @@ The [Argoverse 2 Scene Flow generation script](https://github.com/kylevedder/arg
 
 Please note that when downloaded from the cloud, these files may have a different top level directory format (their stored format keeps changing); you can solve this by moving the files or symlinking the appropriate directories into a different tree. We have uploaded [a prebuilt DockerHub image](https://hub.docker.com/repository/docker/kylevedder/argoverse2_sf/general) for running the generation script.
 
-### Argoverse 2 Tiny Demo Dataset (New!)
+### Argoverse 2 NSFP Pseudolabels (New!)
+
+We provide the Argoverse 2 NSFP Pseudolabels for the _Sensor_ split in the S3 bucket 
+
+```
+s3://argoverse/assets/av2/scene_flow/sensor/
+```
+
+and for our subsets of the _Lidar_ split
+
+```
+s3://argoverse/assets/av2/scene_flow/lidar/subsample/
+```
+
+### Argoverse 2 Tiny Demo Dataset
 
 To get started, we provide a directly downloadable [tiny demo dataset](https://github.com/kylevedder/zeroflow/files/13059582/argoverse2_tiny.zip) (5.5MB).
 
